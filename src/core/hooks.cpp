@@ -414,8 +414,41 @@ Status HookEngine::install_inline_hook(const std::string& name, void* target,
 
 Status HookEngine::install_vmt_hook(const std::string& name, void** vtable,
                                      size_t index, void* detour, void** original_out) {
-    (void)name; (void)vtable; (void)index; (void)detour; (void)original_out;
-    return Status::ErrorNotSupported; // Implemented later
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (hooks_.find(name) != hooks_.end()) {
+        return Status::ErrorAlreadyInitialized;
+    }
+
+    if (!vtable || !detour) return Status::ErrorInvalidParam;
+
+    // The vtable entry to patch
+    void** entry = &vtable[index];
+    void* original = vtable[index];
+
+    if (original_out) *original_out = original;
+
+    // Overwrite the vtable entry
+    if (!Memory::safe_write(entry, &detour, sizeof(void*))) {
+        PHANTOM_ERROR("Failed to patch VMT entry for " + name);
+        return Status::ErrorHookFailed;
+    }
+
+    HookContext ctx{};
+    ctx.name = name;
+    ctx.type = HookType::VMT;
+    ctx.target = entry;
+    ctx.detour = detour;
+    ctx.trampoline = original;
+    ctx.original_bytes = nullptr;
+    ctx.patch_size = sizeof(void*);
+    ctx.active = true;
+
+    hooks_[name] = ctx;
+
+    PHANTOM_INFO("VMT hook installed: " + name + " (vtable index " +
+                 std::to_string(index) + ")");
+    return Status::Success;
 }
 
 }} // namespace phantom::core
