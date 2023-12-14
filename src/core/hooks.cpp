@@ -304,15 +304,25 @@ size_t HookEngine::calculate_trampoline_size(void* target) {
 
 void* HookEngine::create_trampoline(void* target, size_t patch_size) {
     // Allocate trampoline near target for relative addressing
-    size_t tramp_size = patch_size + 14; // copied bytes + JMP back
+    // Align to 16 bytes to avoid crossing cache line boundaries
+    // and prevent alignment faults on SSE/AVX instructions
+    size_t tramp_size = ((patch_size + 14) + 15) & ~15; // align to 16
     void* trampoline = Memory::alloc_near(target, tramp_size);
     if (!trampoline) return nullptr;
+
+    // Zero the trampoline first for clean padding
+    memset(trampoline, 0xCC, tramp_size); // INT3 fill for safety
 
     // Copy original bytes
     memcpy(trampoline, target, patch_size);
 
-    // Add JMP back to original code after the patched region
-    uint8_t* jmp_back = static_cast<uint8_t*>(trampoline) + patch_size;
+    // Align JMP back address to avoid misaligned jumps
+    size_t jmp_offset = (patch_size + 1) & ~1; // align to 2 bytes minimum
+    uint8_t* jmp_back = static_cast<uint8_t*>(trampoline) + jmp_offset;
+    // NOP-fill the gap between copied bytes and jump
+    for (size_t i = patch_size; i < jmp_offset; i++) {
+        static_cast<uint8_t*>(trampoline)[i] = 0x90;
+    }
     void* continue_addr = static_cast<uint8_t*>(target) + patch_size;
 
 #ifdef _WIN64
