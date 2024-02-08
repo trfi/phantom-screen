@@ -36,13 +36,24 @@ target_link_libraries(phantom
         advapi32
 )
 
-# Source files will be added incrementally
 target_sources(phantom PRIVATE
-    # placeholder
+    src/core/hooks.cpp
+    src/core/memory.cpp
+    src/core/process.cpp
+    src/capture/detector.cpp
+    src/capture/bitblt.cpp
+    src/capture/dxgi.cpp
+    src/capture/wgc.cpp
+    src/display/overlay.cpp
+    src/display/cloaker.cpp
+    src/display/composition.cpp
+    src/utils/logger.cpp
+    src/utils/config.cpp
 )
 
 if(PHANTOM_BUILD_EXAMPLES)
-    # Examples will be added later
+    add_executable(basic_cloak examples/basic_cloak.cpp)
+    target_link_libraries(basic_cloak PRIVATE phantom)
 endif()
 
 if(PHANTOM_BUILD_TESTS)
