@@ -54,6 +54,9 @@ target_sources(phantom PRIVATE
 if(PHANTOM_BUILD_EXAMPLES)
     add_executable(basic_cloak examples/basic_cloak.cpp)
     target_link_libraries(basic_cloak PRIVATE phantom)
+
+    add_executable(capture_detect examples/capture_detect.cpp)
+    target_link_libraries(capture_detect PRIVATE phantom)
 endif()
 
 if(PHANTOM_BUILD_TESTS)
