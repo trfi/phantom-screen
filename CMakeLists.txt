@@ -61,7 +61,10 @@ endif()
 
 if(PHANTOM_BUILD_TESTS)
     enable_testing()
-    # Tests will be added later
+
+    add_executable(test_hooks tests/test_hooks.cpp)
+    target_link_libraries(test_hooks PRIVATE phantom)
+    add_test(NAME HookEngineTests COMMAND test_hooks)
 endif()
 
 install(TARGETS phantom ARCHIVE DESTINATION lib)
