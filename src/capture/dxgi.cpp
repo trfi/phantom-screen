@@ -61,14 +61,30 @@ Status DxgiBypass::initialize() {
         return Status::ErrorNotSupported;
     }
 
-    hr = adapter->EnumOutputs(0, &output);
+    // Enumerate all outputs (multi-monitor support)
+    // Previously only checked output 0 which crashed on multi-monitor
+    // setups where the primary output index could differ
+    std::vector<IDXGIOutput*> outputs;
+    IDXGIOutput* tmpOutput = nullptr;
+    for (UINT i = 0; adapter->EnumOutputs(i, &tmpOutput) != DXGI_ERROR_NOT_FOUND; i++) {
+        outputs.push_back(tmpOutput);
+    }
     adapter->Release();
-    if (FAILED(hr)) {
-        PHANTOM_WARN("No display output found (headless?)");
+
+    if (outputs.empty()) {
+        PHANTOM_WARN("No display outputs found (headless?)");
         device->Release();
         context->Release();
         return Status::ErrorNotSupported;
     }
+
+    // Use the first output; hook will apply to all duplications
+    output = outputs[0];
+    // Release extra outputs
+    for (size_t i = 1; i < outputs.size(); i++) {
+        outputs[i]->Release();
+    }
+    PHANTOM_INFO("Found " + std::to_string(outputs.size()) + " display output(s)");
 
     hr = output->QueryInterface(__uuidof(IDXGIOutput1), (void**)&output1);
     output->Release();
