@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [Debug, Release]
+        arch: [x64, x86]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -A ${{ matrix.arch == 'x64' && 'x64' || 'Win32' }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DPHANTOM_BUILD_EXAMPLES=ON \
+            -DPHANTOM_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} --parallel
+
+      - name: Run Tests
+        if: matrix.config == 'Debug'
+        run: ctest --test-dir build --config ${{ matrix.config }} --output-on-failure --timeout 60
+
+      - name: Upload Artifacts
+        if: matrix.config == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: phantom-screen-${{ matrix.arch }}-${{ matrix.config }}
+          path: |
+            build/${{ matrix.config }}/*.exe
+            build/${{ matrix.config }}/*.lib
+
+  lint:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: choco install cppcheck -y
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=warning,style,performance \
+            --suppress=missingIncludeSystem \
+            --inline-suppr \
+            -I include \
+            --error-exitcode=1 \
+            src/
