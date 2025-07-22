@@ -122,8 +122,17 @@ bool Detector::check_window_hooks(DWORD pid) {
 
 std::vector<CaptureProcess> Detector::scan_once() {
     std::vector<CaptureProcess> results;
+    results.reserve(8); // Pre-allocate for typical capture app count
 
     auto processes = core::Process::enumerate_processes();
+
+    // Build a hash set of known names for O(1) lookup instead of O(n)
+    static std::unordered_map<std::string, CaptureMethod> known_map;
+    if (known_map.empty()) {
+        for (const auto& [name, method] : known_capture_apps()) {
+            known_map[name] = method;
+        }
+    }
 
     for (const auto& proc : processes) {
         std::string lower_name = proc.name;
@@ -132,12 +141,10 @@ std::vector<CaptureProcess> Detector::scan_once() {
 
         CaptureMethod method = CaptureMethod::Unknown;
 
-        // Check against known capture applications
-        for (const auto& [known_name, known_method] : known_capture_apps()) {
-            if (lower_name == known_name) {
-                method = known_method;
-                break;
-            }
+        // O(1) lookup against known capture applications
+        auto kit = known_map.find(lower_name);
+        if (kit != known_map.end()) {
+            method = kit->second;
         }
 
         if (method == CaptureMethod::Unknown) {
