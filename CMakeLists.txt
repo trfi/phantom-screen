@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(phantom-screen
-    VERSION 1.0.0
+    VERSION 2.1.0
     DESCRIPTION "Screen capture bypass and protection research toolkit"
     LANGUAGES CXX
 )
