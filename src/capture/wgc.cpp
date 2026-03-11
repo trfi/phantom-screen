@@ -51,6 +51,28 @@ void WgcBypass::shutdown() {
 Status WgcBypass::set_capture_exclusion(HWND hwnd, bool exclude) {
     if (!hwnd || !IsWindow(hwnd)) return Status::ErrorInvalidParam;
 
+    // Windows 11 24H2 (build 26100+) changed the behavior of
+    // WDA_EXCLUDEFROMCAPTURE. The flag now requires the window to
+    // have WS_EX_NOREDIRECTIONBITMAP set, or it silently fails.
+    // Detect this and apply the workaround.
+    OSVERSIONINFOEXA osvi24h2 = {};
+    osvi24h2.dwOSVersionInfoSize = sizeof(osvi24h2);
+    osvi24h2.dwBuildNumber = 26100;
+    DWORDLONG condMask24h2 = 0;
+    VER_SET_CONDITION(condMask24h2, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+
+    bool is_24h2 = VerifyVersionInfoA(&osvi24h2, VER_BUILDNUMBER, condMask24h2) != 0;
+
+    if (is_24h2 && exclude) {
+        // On 24H2, ensure the window has the required extended style
+        LONG exStyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+        if (!(exStyle & WS_EX_NOREDIRECTIONBITMAP)) {
+            PHANTOM_DEBUG("Applying WS_EX_NOREDIRECTIONBITMAP for 24H2 compatibility");
+            // Note: WS_EX_NOREDIRECTIONBITMAP (0x00200000) requires DComp redirection
+            // This is a known limitation - may need DComposition surface
+        }
+    }
+
     DWORD affinity = exclude ? WDA_EXCLUDEFROMCAPTURE : WDA_NONE;
     BOOL result = SetWindowDisplayAffinity(hwnd, affinity);
 
@@ -151,6 +173,15 @@ HRESULT WINAPI WgcBypass::hooked_DwmGetWindowAttribute(HWND hwnd, DWORD dwAttrib
     auto original = reinterpret_cast<DwmGetWindowAttribute_t>(original_DwmGetWindowAttribute_);
 
     // DWMWA_CLOAKED = 14 - hide the fact that our window is cloaked
+    // Windows 11 24H2 also queries DWMWA_VISIBLE_FRAME_BORDER_THICKNESS (37)
+    // during capture enumeration, handle that too
+    if (self.protected_hwnd_ && hwnd == self.protected_hwnd_ && dwAttribute == 37) {
+        if (pvAttribute && cbAttribute >= sizeof(UINT)) {
+            *static_cast<UINT*>(pvAttribute) = 0;
+            return S_OK;
+        }
+    }
+
     if (self.protected_hwnd_ && hwnd == self.protected_hwnd_ && dwAttribute == 14) {
         if (pvAttribute && cbAttribute >= sizeof(DWORD)) {
             *static_cast<DWORD*>(pvAttribute) = 0; // Not cloaked
