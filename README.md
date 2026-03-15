@@ -301,3 +301,11 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 This project would not be possible without the extensive documentation and research published by the Windows reverse engineering community. Special thanks to everyone who has contributed to the public understanding of DWM, DXGI, and the Windows display pipeline.
+
+## Contact
+
+Interested in custom bypass research, need enterprise support, or want to discuss a use case?
+
+- **Email:** [contact@bypasscore.com](mailto:contact@bypasscore.com)
+- **Telegram:** [@bypasscore](https://t.me/bypasscore)
+- **Web:** [bypasscore.com](https://bypasscore.com)
