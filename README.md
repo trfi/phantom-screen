@@ -309,3 +309,9 @@ Interested in custom bypass research, need enterprise support, or want to discus
 - **Email:** [contact@bypasscore.com](mailto:contact@bypasscore.com)
 - **Telegram:** [@bypasscore](https://t.me/bypasscore)
 - **Web:** [bypasscore.com](https://bypasscore.com)
+
+## Support
+
+Help keep BypassCore open-source and independent.
+
+**USDT (Polygon):** `0xd0f38b51496bee61ea5e9e56e2c414b607ab011a`
