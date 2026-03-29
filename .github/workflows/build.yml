@@ -1,0 +1,39 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # windows-latest ships with VS 2022, CMake 3.x, and Windows SDK 10.0.22621+
+    # — all prerequisites listed in the README are satisfied out of the box.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        # Matches: cmake -B build -G "Visual Studio 17 2022" -A x64
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        # Matches: cmake --build build --config Release
+        run: cmake --build build --config Release --parallel
+
+      - name: Run Tests
+        # Matches: ctest --test-dir build --config Release --output-on-failure
+        run: ctest --test-dir build --config Release --output-on-failure
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phantom-screen-x64-Release
+          path: |
+            build/Release/*.lib
+            build/Release/*.exe

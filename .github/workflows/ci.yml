@@ -21,11 +21,8 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Configure CMake
-        run: |
-          cmake -B build -A ${{ matrix.arch == 'x64' && 'x64' || 'Win32' }} \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
-            -DPHANTOM_BUILD_EXAMPLES=ON \
-            -DPHANTOM_BUILD_TESTS=ON
+        # -G is required; without it CMake may not pick VS 2022 on the runner
+        run: cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.arch == 'x64' && 'x64' || 'Win32' }} -DPHANTOM_BUILD_EXAMPLES=ON -DPHANTOM_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --config ${{ matrix.config }} --parallel
@@ -52,10 +49,5 @@ jobs:
         run: choco install cppcheck -y
 
       - name: Run cppcheck
-        run: |
-          cppcheck --enable=warning,style,performance \
-            --suppress=missingIncludeSystem \
-            --inline-suppr \
-            -I include \
-            --error-exitcode=1 \
-            src/
+        # Single-line: PowerShell does not support \ line continuations
+        run: cppcheck --enable=warning,style,performance --suppress=missingIncludeSystem --inline-suppr -I include --error-exitcode=1 src/
