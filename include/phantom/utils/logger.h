@@ -96,7 +96,7 @@ private:
     static const char* extract_filename(const char* path) {
         const char* file = path;
         for (const char* p = path; *p; ++p) {
-            if (*p == '\' || *p == '/') file = p + 1;
+            if (*p == '\\' || *p == '/') file = p + 1;
         }
         return file;
     }

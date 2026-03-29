@@ -6,6 +6,7 @@
 #include <dwmapi.h>
 #include <vector>
 #include <string>
+#include <mutex>
 
 namespace phantom { namespace display {
 

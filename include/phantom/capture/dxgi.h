@@ -4,8 +4,8 @@
 
 #include <phantom/phantom.h>
 #include <phantom/core/hooks.h>
-#include <d3d11.h>
 #include <dxgi1_2.h>
+#include <d3d11.h>
 
 namespace phantom { namespace capture {
 
