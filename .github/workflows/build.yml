@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Tests
         # Matches: ctest --test-dir build --config Release --output-on-failure
-        run: ctest --test-dir build --config Release --output-on-failure
+        run: ctest --test-dir build -C Release --output-on-failure
 
       - name: Upload build artifacts
         if: success()
