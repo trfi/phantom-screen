@@ -1,6 +1,7 @@
 #include <phantom/display/overlay.h>
 #include <phantom/display/cloaker.h>
 #include <phantom/utils/logger.h>
+#include <dxgi1_2.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
